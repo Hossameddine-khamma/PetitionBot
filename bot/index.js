@@ -1,3 +1,4 @@
+require("dotenv").config();
 const {
   Client,
   GatewayIntentBits,
@@ -11,8 +12,8 @@ client = new Client({
   ],
 });
 
-const token =
-  "MTA5MzUwNjIwNjgwODY4MjU4Ng.G-fbV0.0Mxm6q12wPpkBB78xdE0amkYXJQ5Wfh8GHUFCs";
+const token = process.env.TOKEN;
+console.log(process.env.TOKEN);
 
 const petitionCommande = new SlashCommandBuilder()
   .setName("petition")
