@@ -7,6 +7,8 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - "27017:27017"
     volumes:
       - ./data/db:/data/db
     healthcheck:
@@ -16,18 +18,18 @@ services:
       retries: 3
       start_period: 20s
 
-  discord_api:
-    build: ./api
-    environment:
-      MONGO_URL: "mongodb://mongo:27017"
-    ports:
-      - "3000:3000"
-    depends_on:
-      mongo:
-        condition: service_healthy
+  # discord_api:
+  #   build: ./api
+  #   environment:
+  #     MONGO_URL: "mongodb://mongo:27017"
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     mongo:
+  #       condition: service_healthy
 
-    healthcheck:
-      test: curl -f http://localhost:3000/health || exit 1
-      interval: 5s
-      timeout: 10s
-      retries: 3
+  #   healthcheck:
+  #     test: curl -f http://localhost:3000/health || exit 1
+  #     interval: 5s
+  #     timeout: 10s
+  #     retries: 3
