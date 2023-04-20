@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const app = express();
-const port = 3001;
+const port = 3000;
 const axios = require("axios");
 
 app.get("/health", async (req, res) => {
@@ -20,7 +20,9 @@ app.get("/health", async (req, res) => {
 app.listen(port, () => {
   console.log(`Start on port => ${port}`);
 });
+
 const {
+  ActionRowBuilder, ButtonBuilder, ButtonStyle,
   Client,
   GatewayIntentBits,
   SlashCommandBuilder,
@@ -43,7 +45,7 @@ const token = process.env.TOKEN;
 console.log(process.env.TOKEN);
 
 const petitionCommande = new SlashCommandBuilder()
-  .setName("petition")
+  .setName("petition-julien")
   .setDescription("permet de creer une pétition")
   .addStringOption((option) =>
     option
@@ -177,4 +179,5 @@ client.on("interactionCreate", async (interaction) => {
     }
   }
 });
+
 client.login(token);

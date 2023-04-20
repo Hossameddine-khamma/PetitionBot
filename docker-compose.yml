@@ -18,18 +18,31 @@ services:
       retries: 3
       start_period: 20s
 
-  # discord_api:
-  #   build: ./api
-  #   environment:
-  #     MONGO_URL: "mongodb://mongo:27017"
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     mongo:
-  #       condition: service_healthy
+  discord_api:
+    build: ./api
+    environment:
+      MONGO_URL: "mongodb://mongo:27017"
+    ports:
+      - "3000:3000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: curl -f http://localhost:3000/health || exit 1
+      interval: 20s
+      timeout: 20s
+      retries: 5
 
-  #   healthcheck:
-  #     test: curl -f http://localhost:3000/health || exit 1
-  #     interval: 5s
-  #     timeout: 10s
-  #     retries: 3
+  discord_bot:
+    build: ./bot
+    environment:
+      TOKEN: "MTA5NjA4MDk3ODc2Nzc4MTg4OA.Ggb-rC.I5RtQgE5fqdPSYemL_Xotrf7fS5YuaWDEP1k3Y"
+      API_URL: "http://discord_api:3000"
+    depends_on:
+      discord_api:
+        condition: service_healthy
+    healthcheck:
+      test: curl -f http://localhost:3000/health || exit 1
+      interval: 5s
+      timeout: 10s
+      retries: 3
