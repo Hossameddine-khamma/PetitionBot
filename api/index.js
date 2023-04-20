@@ -59,15 +59,20 @@ app.post("/petition/:id", async (req, res) => {
       const collection = db.collection("petition");
       const query = { _id: new ObjectId(req.params.id) };
       const petition = await collection.findOne(query);
-
       if (petition) {
-        return res.status(200).send(petition);
+        if (req.body.yes && req.body.no) {
+          var data = { $set: { yes : req.body.yes , no : req.body.no }};
+          const result = await collection.updateOne(query, data, (err , collection) => {
+            if(err) console.log(err);
+            console.log("Record updated successfully");
+          });
+          return res.status(200).send(result);
+        } else {
+          return res.status(400).send("Bad request");
+        }
       } else {
         return res.status(404).send("Not found petition");
       }
-
-      // const result = await collection.insertOne(petition);
-      // return res.status(200).send(result);
     } catch (err) {
       console.log(err);
       return res.status(500).send("Catch", err);
@@ -77,27 +82,6 @@ app.post("/petition/:id", async (req, res) => {
   } else {
     return res.status(400).send("Bad request");
   }
-  // Document petition => user_create, sujet, date_create, date_close, id
-  // var date = new Date();
-  // const petition = {
-  //   user_create: req.body.username,
-  //   sujet: req.body.sujet,
-  //   date_create: new Date(),
-  //   date_close: new Date(date.setDate(date.getDate() + 7)),
-  // };
-
-  // try {
-  //   await client.connect();
-  //   const db = client.db("petition");
-  //   const collection = db.collection("petition");
-  //   const result = await collection.insertOne(petition);
-  //   return res.status(200).send(result);
-  // } catch (err) {
-  //   console.log(err);
-  //   return res.status(500).send("Catch", err);
-  // } finally {
-  //   await client.close();
-  // }
 });
 
 app.get("/petitions", async (req, res) => {
@@ -108,11 +92,13 @@ app.get("/petitions", async (req, res) => {
     const result = await collection.find({}).toArray();
     return res.status(200).send(result);
   } catch (err) {
+
     console.log(err);
-    return res.status(500).send("Catch", err);
+    return res.status(200).send({message: "Petitions not found"});
   } finally {
     await client.close();
   }
+
 });
 
 app.get("/", (req, res) => {});

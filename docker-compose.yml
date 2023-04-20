@@ -1,8 +1,20 @@
 version: "3.8"
 
+# no-new-privileges:true : cette option empêche les conteneurs de changer de privilèges une fois qu'ils ont été démarrés. 
+#   Elle est utilisée pour empêcher les processus dans le conteneur de bénéficier de privilèges supplémentaires, 
+#   tels que l'accès au noyau ou l'escalade de privilèges. Lorsque cette option est définie sur true, 
+#   le conteneur ne peut pas acquérir de nouveaux privilèges.
+
+# seccomp:unconfined : cette option désactive le filtrage des appels système Linux en utilisant Seccomp. 
+#   Seccomp est une fonctionnalité de sécurité Linux qui permet de restreindre les appels système qu'un processus peut effectuer. 
+#   Lorsque cette option est définie sur unconfined, le conteneur est autorisé à effectuer tous les appels système.
+
 services:
   mongo:
     image: mongo:latest
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
@@ -20,10 +32,14 @@ services:
 
   discord_api:
     build: ./api
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
     environment:
-      MONGO_URL: "mongodb://mongo:27017"
-    ports:
-      - "3000:3000"
+      MONGO_URL: "mongodb://root:root@mongo:27017"
+    # Pour le dev 
+    # ports:
+    #   - "3000:3000"
     depends_on:
       mongo:
         condition: service_healthy
@@ -35,8 +51,11 @@ services:
 
   discord_bot:
     build: ./bot
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
     environment:
-      TOKEN: "MTA5NjA4MDk3ODc2Nzc4MTg4OA.Ggb-rC.I5RtQgE5fqdPSYemL_Xotrf7fS5YuaWDEP1k3Y"
+      TOKEN: "{{ secret token_key }}"
       API_URL: "http://discord_api:3000"
     depends_on:
       discord_api:
@@ -46,3 +65,25 @@ services:
       interval: 5s
       timeout: 10s
       retries: 3
+
+  discord_web:
+    build: ./web
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
+    environment:
+      API_URL: "http://discord_api:3000"
+    ports:
+      - "3001:3000"
+    depends_on:
+      discord_api:
+        condition: service_healthy
+    healthcheck:
+      test: curl -f http://localhost:3000/health || exit 1
+      interval: 5s
+      timeout: 10s
+      retries: 3
+
+secrets:
+  token_key:
+    file: ./token_key.txt
