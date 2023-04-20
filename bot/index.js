@@ -3,6 +3,7 @@ const express = require("express");
 const app = express();
 const port = 3000;
 const axios = require("axios");
+const fs = require('fs');
 
 app.get("/health", async (req, res) => {
   if (process.env.API_URL == undefined) {
@@ -41,18 +42,22 @@ client = new Client({
   ],
 });
 
-const token = process.env.TOKEN;
-console.log(process.env.TOKEN);
+
+
+
+const token = fs.readFileSync(process.env.TOKEN_FILE, 'utf8');
+const API_URL = process.env.API_URL;
+console.log(token);
 
 const petitionCommande = new SlashCommandBuilder()
-  .setName("petition-julien")
+  .setName("petition")
   .setDescription("permet de creer une pétition")
   .addStringOption((option) =>
     option
       .setName("sujet")
       .setDescription("le sujet de la pétition")
       .setRequired(true)
-  );
+);
 
 client.once("ready", () => {
   const applicationCommandes = client.guilds.cache.get(
@@ -63,7 +68,6 @@ client.once("ready", () => {
     "Félicitations, votre bot Discord a été correctement initialisé !"
   );
 });
-
 client.on("interactionCreate", async (interaction) => {
   if (interaction.isCommand()) {
     console.log("here");
@@ -77,7 +81,7 @@ client.on("interactionCreate", async (interaction) => {
       };
 
       try {
-        const res = await axios.post("http://discord_api:3000/petition", body);
+        const res = await axios.post(API_URL + "/petition", body);
         id_petition = res.data.insertedId;
       } catch (err) {
         console.log(err);
@@ -157,18 +161,15 @@ client.on("interactionCreate", async (interaction) => {
         console.log(
           `Il y a ${oui} votes pour "oui" et ${non} votes pour "non"`
         );
-        const rs = {
+        const body = {
           yes: results[0] || 0,
           no: results[1] || 0,
-        };
-        const body = {
-          results: rs,
         };
 
         try {
           console.log("here");
           const res = await axios.post(
-            "http://discord_api:3000/petition/" + id_petition,
+            API_URL + "/petition/" + id_petition,
             body
           );
           id_petition = res.data.insertedId;
@@ -179,5 +180,4 @@ client.on("interactionCreate", async (interaction) => {
     }
   }
 });
-
 client.login(token);

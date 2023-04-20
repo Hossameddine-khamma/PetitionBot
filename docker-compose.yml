@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.9"
 
 # no-new-privileges:true : cette option empêche les conteneurs de changer de privilèges une fois qu'ils ont été démarrés. 
 #   Elle est utilisée pour empêcher les processus dans le conteneur de bénéficier de privilèges supplémentaires, 
@@ -8,6 +8,18 @@ version: "3.8"
 # seccomp:unconfined : cette option désactive le filtrage des appels système Linux en utilisant Seccomp. 
 #   Seccomp est une fonctionnalité de sécurité Linux qui permet de restreindre les appels système qu'un processus peut effectuer. 
 #   Lorsque cette option est définie sur unconfined, le conteneur est autorisé à effectuer tous les appels système.
+
+# Les fichiers .env sont stockés en clair sur le système de fichiers de la machine hôte et peuvent donc être facilement accessibles à toute personne ayant accès à la machine. Les secrets de Docker Compose, en revanche, sont stockés de manière cryptée dans le store à secrets de Docker, qui est protégé par des mécanismes de sécurité.
+
+# De plus, l'utilisation de secrets dans Docker Compose vous permet de séparer les informations sensibles de votre code et de les gérer séparément. Cela peut rendre plus facile la gestion de la sécurité des secrets et la mise à jour de ces derniers. Enfin, Docker Compose vous permet de définir des politiques de contrôle d'accès pour les secrets, de sorte que seules les personnes autorisées puissent y accéder.
+
+# When you deploy, Docker mounts a file under /run/secrets/<secret_name> in the services. These files are never persisted in disk, but are managed in memory.
+
+# Each service uses environment variables to specify where the service should look for that secret data.
+
+secrets:
+  token_key:
+    file: ./token_key.txt
 
 services:
   mongo:
@@ -54,9 +66,12 @@ services:
     security_opt:
       - no-new-privileges:true
       - seccomp:unconfined
+    secrets:
+      - token_key
     environment:
-      TOKEN: "{{ secret token_key }}"
+      TOKEN_FILE: /run/secrets/token_key
       API_URL: "http://discord_api:3000"
+    
     depends_on:
       discord_api:
         condition: service_healthy
@@ -84,6 +99,3 @@ services:
       timeout: 10s
       retries: 3
 
-secrets:
-  token_key:
-    file: ./token_key.txt
