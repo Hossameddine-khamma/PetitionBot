@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    h1 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+    }
+    table, th, td {
+      border: 1px solid;
+    }
+  </style>
+</head>
+<body>
+  <h1>
+    Nos pétitions
+  </h1>
+  <% if (!petitions.isEmpty) { %>
+
+  <table>
+    <tr>
+      <th>Nom de la pétition</th>
+      <th>Créateur de la pétition</th>
+      <th>Oui</th>
+      <th>Non</th>
+      <th>Date de création de la pétition</th>
+      <th>Date de cloture de la pétition</th>
+
+    </tr>
+    <% petitions.forEach(function(petition){ %>
+      <%
+        var dateCreation = new Date(petition.date_create);
+        var dateClose = new Date(petition.date_close);
+
+      %>
+      <tr>
+        <td><%= petition.sujet %></td>
+        <td><%= petition.user_create %></td>
+        <td><%= petition.yes??0 %></td>
+        <td><%= petition.no??0 %></td>
+        <td><%= dateCreation.getDate() + " - " + (dateCreation.getMonth()+1) + " - " + dateCreation.getFullYear() + " " + dateCreation.getHours() + ":" + dateCreation.getMinutes() + ":" + dateCreation.getSeconds() %></td>
+        <td><%= dateClose.getDate() + " - " + (dateClose.getMonth()+1) + " - " + dateClose.getFullYear() + " " + dateClose.getHours() + ":" + dateClose.getMinutes() + ":" + dateClose.getSeconds() %></td>
+      </tr>
+    <% }); %>
+  </table>
+  <% } else { %>
+    <h2>Aucune pétition</h2>
+  <% } %>
+</body>
+</html>
