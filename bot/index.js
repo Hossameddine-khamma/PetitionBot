@@ -1,4 +1,25 @@
 require("dotenv").config();
+const express = require("express");
+const app = express();
+const port = 3001;
+const axios = require("axios");
+
+app.get("/health", async (req, res) => {
+  if (process.env.API_URL == undefined) {
+    res.status(500).send("Error");
+  }
+
+  var result = await axios.get(process.env.API_URL + "/health");
+  if (result.status == 200) {
+    res.status(200).send("OK");
+  } else {
+    res.status(500).send("Error");
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Start on port => ${port}`);
+});
 const {
   Client,
   GatewayIntentBits,
@@ -40,13 +61,25 @@ client.once("ready", () => {
   );
 });
 
-
 client.on("interactionCreate", async (interaction) => {
   if (interaction.isCommand()) {
     console.log("here");
     if (interaction.commandName === "petition") {
       const results = {};
-      let question = interaction.options.getString("sujet");
+      let id_petition = "";
+      question = interaction.options.getString("sujet");
+      const body = {
+        username: interaction.member.user.username,
+        sujet: question,
+      };
+
+      try {
+        const res = await axios.post("http://discord_api:3000/petition", body);
+        id_petition = res.data.insertedId;
+      } catch (err) {
+        console.log(err);
+      }
+
       let choices = ["oui", "non"];
       let choiceIndex;
       // Crée un message avec la question et les choix de réponses
@@ -64,11 +97,11 @@ client.on("interactionCreate", async (interaction) => {
         fetchReply: true,
       });
 
-      // Ajoute des réactions pour chaque choix de réponse      
+      // Ajoute des réactions pour chaque choix de réponse
       await pollMessage.react(`\uD83D\uDC4D`);
       await pollMessage.react(`\uD83D\uDC4E`);
 
-      const filter = (reaction, user) => !user.bot
+      const filter = (reaction, user) => !user.bot;
 
       // Attend 10 secondes pour permettre aux utilisateurs de voter
       const collector = pollMessage.createReactionCollector({
@@ -88,10 +121,18 @@ client.on("interactionCreate", async (interaction) => {
       });
 
       collector.on("remove", (reaction, user) => {
+        console.log("test");
         // Vérifie si l'utilisateur a déjà voté pour ce choix de réponse
         const choiceIndex = choices.findIndex(
           (choice, index) =>
-            `${index + 1}` + (choice.includes("0👍") ? "\uD83D\uDC4D" : choice.includes("0👎") ? "\uD83D\uDC4E" : "\u20E3") === "0",reaction.emoji.name
+            `${index + 1}` +
+              (choice.includes("0👍")
+                ? "\uD83D\uDC4D"
+                : choice.includes("0👎")
+                ? "\uD83D\uDC4E"
+                : "\u20E3") ===
+            "0",
+          reaction.emoji.name
         );
 
         const emojiIndex = emojis.indexOf(reaction.emoji.name);
@@ -99,7 +140,6 @@ client.on("interactionCreate", async (interaction) => {
           // Met à jour le nombre de votes pour ce choix de réponse
           results[emojiIndex] = (results[emojiIndex] || 0) - 1;
         }
-        
       });
 
       // Affiche les résultats une fois le temps écoulé et envoie les votes à un serveur
@@ -109,26 +149,29 @@ client.on("interactionCreate", async (interaction) => {
         const resultsEmbed = new EmbedBuilder()
           .setTitle(question)
           .setColor(0x00ff00)
-            .setDescription( `${oui || 0} 👍, ${non || 0} 👎`);
+          .setDescription(`${oui || 0} 👍, ${non || 0} 👎`);
         pollMessage.edit({ embeds: [resultsEmbed] });
-        console.log(`Il y a ${oui} votes pour "oui" et ${non} votes pour "non"`);
-        // Envoie les votes à un serveur
-        const voteData = {
-          question,
-          choices,
-          oui,
-          non
+        console.log(
+          `Il y a ${oui} votes pour "oui" et ${non} votes pour "non"`
+        );
+        const rs = {
+          yes: results[0] || 0,
+          no: results[1] || 0,
         };
-        console.log(voteData);
-        // const response = await fetch("http://example.com/votes", {
-        //   method: "POST",
-        //   body: JSON.stringify(voteData),
-        //   headers: {
-        //     "Content-Type": "application/json",
-        //   },
-        // });
-        // const responseData = await response.json();
-        // console.log(responseData);
+        const body = {
+          results: rs,
+        };
+
+        try {
+          console.log("here");
+          const res = await axios.post(
+            "http://discord_api:3000/petition/" + id_petition,
+            body
+          );
+          id_petition = res.data.insertedId;
+        } catch (err) {
+          console.log(err);
+        }
       });
     }
   }
