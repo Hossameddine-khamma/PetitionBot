@@ -8,14 +8,20 @@ app.use(bodyParser.json());
 var MongoClient = require("mongodb").MongoClient;
 const url = process.env.MONGO_URL || "mongodb://root:root@127.0.0.1:27017/";
 var client = new MongoClient(url, { useNewUrlParser: true });
+client
+  .connect()
+  .then(() => {
+    console.log("MongoDB connected");
+  })
+  .catch((err) => {
+    console.log("Error connecting to MongoDB", err);
+  });
 
 app.get("/health", async (req, res) => {
   try {
-    await client.connect();
     if (client) {
       res.status(200).send("OK");
     }
-    client.close();
   } catch (err) {
     res.status(500).send("Error");
   }
@@ -34,11 +40,9 @@ app.post("/petition", async (req, res) => {
     };
 
     try {
-      await client.connect();
       const db = client.db("petition");
       const collection = db.collection("petition");
       const result = await collection.insertOne(petition);
-      client.close();
       return res.status(200).send(result);
     } catch (err) {
       console.log(err);
@@ -52,15 +56,8 @@ app.post("/petition", async (req, res) => {
 app.post("/petition/:id", async (req, res) => {
   if (req.params.id) {
     try {
-      await client.connect();
       const db = client.db("petition");
-      // console.log("====================================");
-      // console.log("here1");
-      // console.log("====================================");
       const collection = db.collection("petition");
-      console.log("====================================");
-      console.log(collection);
-      console.log("====================================");
       const query = { _id: new ObjectId(req.params.id) };
       const petition = await collection.findOne(query);
       if (petition) {
@@ -74,7 +71,6 @@ app.post("/petition/:id", async (req, res) => {
               console.log("Record updated successfully");
             }
           );
-          client.close();
           return res.status(200).send(result);
         } else {
           return res.status(400).send("Bad request");
@@ -93,11 +89,9 @@ app.post("/petition/:id", async (req, res) => {
 
 app.get("/petitions", async (req, res) => {
   try {
-    await client.connect();
     const db = client.db("petition");
     const collection = await db.collection("petition");
     const result = await collection.find({}).toArray();
-    client.close();
     return res.status(200).send(result);
   } catch (err) {
     console.log(err);
@@ -107,4 +101,17 @@ app.get("/petitions", async (req, res) => {
 
 app.listen(port, () => {
   console.log(`Start on port => ${port}`);
+});
+
+process.on("SIGINT", () => {
+  console.log("Shutting down server...");
+
+  // Close the MongoDB connection
+  mongoose.connection.close(() => {
+    console.log("MongoDB connection closed");
+    server.close(() => {
+      console.log("Server closed");
+      process.exit(0);
+    });
+  });
 });

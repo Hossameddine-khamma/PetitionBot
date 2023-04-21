@@ -3,7 +3,7 @@ const express = require("express");
 const app = express();
 const port = 3000;
 const axios = require("axios");
-const fs = require('fs');
+const fs = require("fs");
 
 app.get("/health", async (req, res) => {
   if (process.env.API_URL == undefined) {
@@ -23,7 +23,9 @@ app.listen(port, () => {
 });
 
 const {
-  ActionRowBuilder, ButtonBuilder, ButtonStyle,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   Client,
   GatewayIntentBits,
   SlashCommandBuilder,
@@ -42,10 +44,7 @@ client = new Client({
   ],
 });
 
-
-
-
-const token = fs.readFileSync(process.env.TOKEN_FILE, 'utf8');
+const token = fs.readFileSync(process.env.TOKEN_FILE, "utf8");
 const API_URL = process.env.API_URL;
 console.log(token);
 
@@ -57,7 +56,7 @@ const petitionCommande = new SlashCommandBuilder()
       .setName("sujet")
       .setDescription("le sujet de la pétition")
       .setRequired(true)
-);
+  );
 
 client.once("ready", () => {
   const applicationCommandes = client.guilds.cache.get(
@@ -162,8 +161,8 @@ client.on("interactionCreate", async (interaction) => {
           `Il y a ${oui} votes pour "oui" et ${non} votes pour "non"`
         );
         const body = {
-          yes: results[0] || 0,
-          no: results[1] || 0,
+          yes: oui || "0",
+          no: non || "0",
         };
 
         try {
