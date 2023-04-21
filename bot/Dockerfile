@@ -3,14 +3,12 @@ RUN apk update && apk add curl
 
 RUN apk add --no-cache nodejs npm shadow
 
-RUN adduser -D api
+RUN adduser -D bot
 
-WORKDIR /usr/src/api
+WORKDIR /usr/src/bot
 COPY . .
 RUN npm install
 
-EXPOSE 3000 
+USER bot
 
-USER api
-
-CMD npm run serv-start
+CMD npm run start
