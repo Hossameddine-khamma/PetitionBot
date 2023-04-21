@@ -57,9 +57,9 @@ services:
         condition: service_healthy
     healthcheck:
       test: curl -f http://localhost:3000/health || exit 1
-      interval: 20s
+      interval: 10s
       timeout: 20s
-      retries: 5
+      retries: 1
 
   discord_bot:
     build: ./bot
@@ -79,7 +79,7 @@ services:
       test: curl -f http://localhost:3000/health || exit 1
       interval: 5s
       timeout: 10s
-      retries: 3
+      retries: 1
 
   discord_web:
     build: ./web
@@ -97,5 +97,5 @@ services:
       test: curl -f http://localhost:3000/health || exit 1
       interval: 5s
       timeout: 10s
-      retries: 3
+      retries: 1
 
